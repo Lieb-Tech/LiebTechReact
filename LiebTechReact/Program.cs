@@ -39,16 +39,9 @@ namespace LiebTechReact
     public class CosmosDB
     {        
         public DocumentClient client;
-
-        // ADD THIS PART TO YOUR CODE
+        
         public CosmosDB()
         {
-            /*
-            "Cosmos": {
-                "EndpointUrl": "https://datafeeds.documents.azure.com:443/",
-                 "PrimaryKey": "DTMyirMGmVjxZqnjKefDNpXD6rybf7JRVM1kfT6VNFvzb4WbDojZZ1ICrgv6ionl4fVe5XWFx642kwWZs4AIZw=="
-            }
-            */
             var data = File.ReadAllText("cosmosDbKey.json");
             var config = JsonConvert.DeserializeObject<CosmosSetting>(data);
 
