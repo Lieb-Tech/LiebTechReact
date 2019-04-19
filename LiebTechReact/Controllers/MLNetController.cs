@@ -16,8 +16,12 @@ namespace LiebTechReact.Controllers
     public class MLNetController : ControllerBase
     {
         private static MLContext _mlContext = null;
-        private static ITransformer loadedModel;
-        private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngine = null;
+
+        private static ITransformer _loadedModel;
+        
+        private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineSDCA = null;
+        private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineLR = null;
+
         private readonly IHostingEnvironment _hostingEnvironment;
 
         public MLNetController(IHostingEnvironment hostingEnvironment)
@@ -31,22 +35,28 @@ namespace LiebTechReact.Controllers
         {
             try
             {
+                string projectRootPath = _hostingEnvironment.ContentRootPath;
+
                 if (_mlContext == null)
                 {
-                    string projectRootPath = _hostingEnvironment.ContentRootPath;
-                    string _modelPath = projectRootPath + "/Data/feed_model.zip";
                     _mlContext = new MLContext(seed: 0);
+
+                    string _modelPath = projectRootPath + "/Data/feed_model.zip";                    
                     using (var stream = new FileStream(_modelPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    {
-                        loadedModel = _mlContext.Model.Load(stream);
-                    }
-                    _predEngine = loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
+                        _loadedModel = _mlContext.Model.Load(stream);
+                    _predEngineSDCA = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
+
+                    _modelPath = projectRootPath + "/Data/LR_feed_model.zip";
+                    using (var stream = new FileStream(_modelPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        _loadedModel = _mlContext.Model.Load(stream);                    
+                    _predEngineLR = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
                 }
 
                 return Ok(new { loadedOk = true });
             }
             catch (Exception ex)
             {
+                _mlContext = null;
                 return BadRequest(new { ex.Message });
             }
         }        
@@ -73,11 +83,12 @@ namespace LiebTechReact.Controllers
                     Description = n.description
                 };
 
-                var prediction = _predEngine.Predict(singleIssue);
+
 
                 results.Add(new
                 {
-                    prediction,
+                    sdca = _predEngineSDCA.Predict(singleIssue),
+                    lr = _predEngineLR.Predict(singleIssue),
                     newsItem = n
                 });
             }

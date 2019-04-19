@@ -7,7 +7,7 @@ export class MLNet extends Component {
 
     constructor(props) {
         super(props);
-        this.state = { init: true, loading: false, count: 25, showCode: false };
+        this.state = { init: true, loading: false, count: 50, showCode: false };
 
         fetch('api/mlnet/initModel')
             .then(data => {
@@ -34,14 +34,15 @@ export class MLNet extends Component {
 
         let modelLoad = 'string _modelPath = projectRootPath + "/Data/feed_model.zip"; \r\n' +
             '_mlContext = new MLContext(seed: 0); \r\n' +
-            'using (var stream = new FileStream(_modelPath, FileMode.Open, FileAccess.Read, FileShare.Read))  \r\n' +
+            'using (var stream = new FileStream(_modelPathSCDA, FileMode.Open, FileAccess.Read, FileShare.Read))  \r\n' +
+            '\tloadedModel = _mlContext.Model.Load(stream);  \r\n\r\n' +
+            'using (var stream = new FileStream(_modelPathLR, FileMode.Open, FileAccess.Read, FileShare.Read))  \r\n' +
             '\tloadedModel = _mlContext.Model.Load(stream);  \r\n' +
-            '\r\n' +
-            '_predEngine = loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext); '
+            '_predEngineLR = loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext); '
 
         let qryCode = 'var qry = Program.cdb.GetDocumentQuery<NewsItem>("newsfeed")\r\n ' +
             '\t\t.OrderByDescending(z => z._ts).Take(count).ToList();\r\n ' +
-            'var results = new List<dynamic>(); ';
+            'var results = new List<dynamic>(); \r\n';
 
         let predictionCode = 'foreach (var n in qry) \r\n' +
             '{  \r\n' +
@@ -50,16 +51,16 @@ export class MLNet extends Component {
             '\t\tTitle = n.title,  \r\n' +
             '\t\tDescription = n.description \r\n' +
             '\t}; \r\n' +
-            '\tvar prediction = _predEngine.Predict(singleIssue); \r\n' +
             '\tresults.Add(new \r\n' +
             '\t{ \r\n' +
-            '\t\tprediction, \r\n' +
+            '\t\tscda = _predEngineSCDA.Predict(singleIssue), \r\n' +
+            '\t\tlr = _predEngineLR.Predict(singleIssue), \r\n' +
             '\t\tnewsItem = n \r\n' +
             '\t}); \r\n' +
             '}';
         
         return (
-            <div style={{ padding: "5px", left: "15px", top: "15px", backgroundColor: "silver", position: "absolute", height: "600px", width: "800px", zIndex: "5" }}>
+            <div style={{ padding: "5px", left: "15px", top: "15px", backgroundColor: "silver", position: "absolute", height: "700px", width: "825px", zIndex: "5" }}>
                 <div style={{ position: "absolute", right: "10px" }}><a href="" onClick={(e) => this.closeCode(e)}>Close</a></div>
                 <h2>Code snippets</h2>
                 <h4>Load the model</h4>
@@ -75,13 +76,20 @@ export class MLNet extends Component {
        );       
     }
 
-    renderPred() {
+    renderPred() {        
         let data = this.state.data;
+        let s = 0, n = 0, l = 0;
+        data.map(d => {
+            if (d.sdca.section === d.newsItem.partionKey) s++;            
+            if (d.lr.section === d.newsItem.partionKey) l++;
+        });
+        s = ((s / this.state.count) * 100).toFixed(1);
+        l = ((l / this.state.count) * 100).toFixed(1)
         return (
         <div>
                 <ul>                    
                     <li>ML.Net framework v0.11 used to generate model</li>
-                    <li>Training algorithm used: StochasticDualCoordinateAscent </li>
+                    <li>Training algorithm used: StochasticDualCoordinateAscent (SDCA), Logistic Regression (LR)</li>
                     <li>Features used: Title (displayed below) and Description</li>
                     <li>Label: feed source</li>
                     <li>Training records: 15,000 </li>
@@ -94,17 +102,25 @@ export class MLNet extends Component {
                 <table>
                     <thead>                        
                         <tr>
-                            <th>Prediction &nbsp;</th>
+                                <th><div>SDCA</div>({s}%)</th>                                
+                                <th><div>LR</div>({l}%)</th>
                             <th>Actual &nbsp;</th>
                             <th>Title</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {data.map(d =>
-                            <tr style={{color:d.prediction.section === d.newsItem.partionKey ? 'green' :'red'}} >
-                                <td>{d.prediction.section}</td><td>{d.newsItem.partionKey}</td><td>{d.newsItem.title}</td>
-                            </tr>                                                                                                     
-                    )}
+                        <tbody>                            
+                            {data.map(d =>                                 
+                                <tr >
+                                    <td style={{ color: d.sdca.section === d.newsItem.partionKey ? 'green' : 'red' }}>{d.sdca.section}</td>
+                                    <td style={{ color: d.lr.section === d.newsItem.partionKey ? 'green' : 'red' }}>{d.lr.section}</td>
+                                    <td>{d.newsItem.partionKey}</td>
+                                    <td style={{
+                                        color: (d.sdca.section === d.newsItem.partionKey ||                                            
+                                            d.lr.section === d.newsItem.partionKey)
+                                            ? 'green' : 'red'
+                                    }}>{d.newsItem.title}</td>
+                                </tr>                            
+                        )}
                     </tbody>
                 </table>        
                 </div>
