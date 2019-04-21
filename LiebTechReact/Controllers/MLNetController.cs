@@ -17,8 +17,7 @@ namespace LiebTechReact.Controllers
     {
         private static MLContext _mlContext = null;
 
-        private static ITransformer _loadedModel;
-        
+        private static ITransformer _loadedModel;        
         private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineSDCA = null;
         private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineLR = null;
 
@@ -40,13 +39,13 @@ namespace LiebTechReact.Controllers
                 if (_mlContext == null)
                 {
                     _mlContext = new MLContext(seed: 0);
-
-                    string _modelPath = projectRootPath + "/Data/feed_model.zip";                    
+                           
+                    string _modelPath = projectRootPath + "/Data/SD20_feed_model.zip";                    
                     using (var stream = new FileStream(_modelPath, FileMode.Open, FileAccess.Read, FileShare.Read))
                         _loadedModel = _mlContext.Model.Load(stream);
                     _predEngineSDCA = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
 
-                    _modelPath = projectRootPath + "/Data/LR_feed_model.zip";
+                    _modelPath = projectRootPath + "/Data/LR20_feed_model.zip";
                     using (var stream = new FileStream(_modelPath, FileMode.Open, FileAccess.Read, FileShare.Read))
                         _loadedModel = _mlContext.Model.Load(stream);                    
                     _predEngineLR = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
@@ -82,8 +81,6 @@ namespace LiebTechReact.Controllers
                     Title = n.title,
                     Description = n.description
                 };
-
-
 
                 results.Add(new
                 {

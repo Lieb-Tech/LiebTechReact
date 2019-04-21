@@ -21,6 +21,40 @@ export class MLNet extends Component {
             });
     }
 
+    viewStats(e) {
+        this.setState({ 'showStats': true });
+        e.preventDefault();
+    }
+    closeStats(e) {
+        this.setState({ 'showStats': false });
+        e.preventDefault();
+    }
+
+    statoverCode() {
+        return (
+            <div style={{ padding: "5px", left: "15px", top: "15px", backgroundColor: "silver", position: "absolute", height: "700px", width: "825px", zIndex: "5" }}>
+                <div style={{ position: "absolute", right: "10px" }}><a href="" onClick={(e) => this.closeStats(e)}>Close</a></div>
+                <h2>Differnce in accuracy in training set sizes</h2>
+                <h4>Logistical Regression</h4>
+                <div>
+                    <p>10,000 = 33.7% accurate</p>
+                    <p>15,000 = 45.6% accurate</p>
+                    <p>20,000 = 59.9% accurate</p>
+                </div>
+                <h4>SDCA</h4>
+                <div>
+                    <p>10,000 = 40.2% accurate</p>
+                    <p>15,000 = 58.4% accurate</p>
+                    <p>20,000 = 62.5% accurate</p>
+                </div>
+                <p></p>
+                <p></p>
+                <div>Note: 1,000 records were processed against the above 6 models,</div>
+                <div>noting how many predictions matched the actual source</div>                
+            </div>
+        );       
+    }
+        
     viewCode(e) {        
         this.setState({ 'showCode': true });
         e.preventDefault();
@@ -92,7 +126,7 @@ export class MLNet extends Component {
                     <li>Training algorithm used: StochasticDualCoordinateAscent (SDCA), Logistic Regression (LR)</li>
                     <li>Features used: Title (displayed below) and Description</li>
                     <li>Label: feed source</li>
-                    <li>Training records: 15,000 </li>
+                    <li>Training records: 20,000 <a href="" onClick={(e) => this.viewStats(e)}>View Stats</a> </li>
                     <li>Model imported into prediction engine into site's .NET Core API <a href="" onClick={(e) => this.viewCode(e)}>View code</a></li>
                 </ul>
             
@@ -129,6 +163,10 @@ export class MLNet extends Component {
     }           
 
     render() {
+        let statover = this.state.showStats
+            ? this.statoverCode()
+            : "";
+
         let popover = this.state.showCode
             ? this.popoverCode()
             : "";
@@ -169,6 +207,7 @@ export class MLNet extends Component {
         return (
             <div>                
                 <h1>ML.Net results</h1>
+                {statover}
                 {popover}
                 {contents}
                 <div>&nbsp;</div>

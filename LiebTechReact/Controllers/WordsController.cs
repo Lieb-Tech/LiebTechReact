@@ -230,7 +230,6 @@ namespace LiebTechReact.Controllers
 
             return Ok(new { count = vals.First().ToString() });
         }
-
     }
 
     public class NewsItem
