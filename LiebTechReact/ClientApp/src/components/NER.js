@@ -5,7 +5,7 @@ export class NER extends Component {
 
     constructor(props) {
         super(props);
-        this.state = { words: [], loading: true, hasSelected: false, count: 'Counting ... ', numSeg: 20, minPer: 5 };
+        this.state = { words: [], loading: true, hasSelected: false, count: 'Counting ... ', numSeg: 20, minPer: 5, minResult: 1 };
         this.loadData();
         this.reloadData = this.reloadData.bind(this);
     }
@@ -14,6 +14,7 @@ export class NER extends Component {
         let qry = {
             minPer: this.state.minPer.toString(),
             numSeg: this.state.numSeg.toString(),
+            minRes: this.state.minResult.toString()
         }
 
         fetch('api/Words/ner', {
@@ -91,6 +92,8 @@ export class NER extends Component {
     inputChangedHandler(event, type) {
         if (type === 'min')
             this.setState({ 'minPer': event.target.value });
+        if (type === 'res')
+            this.setState({ 'minResult': event.target.value });
         else
             this.setState({ 'numSeg': event.target.value });
         event.preventDefault();
@@ -115,8 +118,9 @@ export class NER extends Component {
         let search =
             (<div>
                 <form onSubmit={this.reloadData}>
-                    <label>Minutes per segment:</label> <input type='text' style={{ width: '25px' }} value={this.state.minPer} onChange={(event) => this.inputChangedHandler(event, 'min')} /> - &nbsp;
-                    <label>Number of segments:</label> <input type='text' style={{ width: '25px' }} value={this.state.numSeg} onChange={(event) => this.inputChangedHandler(event, 'num')} />  &nbsp;                 
+                    <label>Minutes per segment:</label> <input type='text' style={{ width: '50px' }} value={this.state.minPer} onChange={(event) => this.inputChangedHandler(event, 'min')} /> - &nbsp;
+                    <label>Number of segments:</label> <input type='text' style={{ width: '50px' }} value={this.state.numSeg} onChange={(event) => this.inputChangedHandler(event, 'num')} />  &nbsp;                 
+                    <label>Minimim count:</label> <input type='text' style={{ width: '50px' }} value={this.state.minResult} onChange={(event) => this.inputChangedHandler(event, 'res')} />  &nbsp;                 
                 <input type="submit" value="Load data" />
                 </form>
             </div>);

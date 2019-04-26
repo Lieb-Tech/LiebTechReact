@@ -148,6 +148,7 @@ namespace LiebTechReact.Controllers
         {
             public string minPer { get; set; }
             public string numSeg { get; set; }
+            public string minResult { get; set; }
         }
         [Route("NER")]
         [HttpPost]
@@ -200,7 +201,7 @@ namespace LiebTechReact.Controllers
                                 count = result.data.Count()
                             });
                     }
-                    o.vals = o.vals.OrderByDescending(z => z.count).ToList();
+                    o.vals = o.vals.Where(z => z.count > int.Parse(opts.minResult ?? "2")).OrderByDescending(z => z.count).ToList();
                 }
                 ret.Add(o);
             }

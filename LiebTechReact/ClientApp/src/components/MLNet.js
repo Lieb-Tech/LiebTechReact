@@ -7,11 +7,12 @@ export class MLNet extends Component {
 
     constructor(props) {
         super(props);
-        this.state = { init: true, loading: false, count: 50, showCode: false };
+        this.state = { init: true, loading: false, count: 50, showCode: false, modelSize: '30,000' };
 
         fetch('api/mlnet/initModel')
+            .then(response => response.json())
             .then(data => {
-                this.setState({ init: false, loading: true });
+                this.setState({ init: false, loading: true, modelSize: data.size });
 
                 fetch('api/mlnet/recentml/' + this.state.count)
                     .then(response => response.json())
@@ -37,19 +38,25 @@ export class MLNet extends Component {
                 <h2>Differnce in accuracy in training set sizes</h2>
                 <h4>Logistical Regression</h4>
                 <div>
-                    <p>10,000 = 33.7% accurate</p>
-                    <p>15,000 = 45.6% accurate</p>
-                    <p>20,000 = 59.9% accurate</p>
+                    <p>&nbsp;5,000 = 71.0 %</p>
+                    <p>10,000 = 71.9 % accurate</p>
+                    <p>15,000 = 71.4 % accurate</p>
+                    <p>20,000 = 71.9 % accurate</p>
+                    <p>25,000 = 73.2 % accurate</p>
+                    <p>30,000 = 74.8 % accurate</p>
                 </div>
                 <h4>SDCA</h4>
                 <div>
-                    <p>10,000 = 40.2% accurate</p>
-                    <p>15,000 = 58.4% accurate</p>
-                    <p>20,000 = 62.5% accurate</p>
+                    <p>&nbsp;5,000 = 74.2 % accurate</p>
+                    <p>10,000 = 72.9 % accurate</p>
+                    <p>15,000 = 70.5 % accurate</p>
+                    <p>20,000 = 70.6 % accurate</p>
+                    <p>25,000 = 70.2 % accurate</p>
+                    <p>30,000 = 72.0 % accurate</p>
                 </div>
                 <p></p>
                 <p></p>
-                <div>Note: 1,000 records were processed against the above 6 models,</div>
+                <div>Note: 1,000 records were processed against the above models,</div>
                 <div>noting how many predictions matched the actual source</div>                
             </div>
         );       
@@ -65,7 +72,6 @@ export class MLNet extends Component {
     }
 
     popoverCode() {
-
         let modelLoad = 'string _modelPath = projectRootPath + "/Data/feed_model.zip"; \r\n' +
             '_mlContext = new MLContext(seed: 0); \r\n' +
             'using (var stream = new FileStream(_modelPathSCDA, FileMode.Open, FileAccess.Read, FileShare.Read))  \r\n' +
@@ -126,7 +132,7 @@ export class MLNet extends Component {
                     <li>Training algorithm used: StochasticDualCoordinateAscent (SDCA), Logistic Regression (LR)</li>
                     <li>Features used: Title (displayed below) and Description</li>
                     <li>Label: feed source</li>
-                    <li>Training records: 20,000 <a href="" onClick={(e) => this.viewStats(e)}>View Stats</a> </li>
+                    <li>Training records: {this.state.modelSize},000 <a href="" onClick={(e) => this.viewStats(e)}>View stats</a></li>
                     <li>Model imported into prediction engine into site's .NET Core API <a href="" onClick={(e) => this.viewCode(e)}>View code</a></li>
                 </ul>
             
@@ -144,7 +150,7 @@ export class MLNet extends Component {
                     </thead>
                         <tbody>                            
                             {data.map(d =>                                 
-                                <tr >
+                                <tr>
                                     <td style={{ color: d.sdca.section === d.newsItem.partionKey ? 'green' : 'red' }}>{d.sdca.section}</td>
                                     <td style={{ color: d.lr.section === d.newsItem.partionKey ? 'green' : 'red' }}>{d.lr.section}</td>
                                     <td>{d.newsItem.partionKey}</td>
@@ -203,7 +209,8 @@ export class MLNet extends Component {
                     }
                     </pre>
                 </div>
-                : this.renderPred());            
+                : this.renderPred());    
+                //<!-- <a href="" onClick={(e) => this.viewStats(e)}>View Stats</a> -->
         return (
             <div>                
                 <h1>ML.Net results</h1>

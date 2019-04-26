@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 
@@ -16,7 +17,7 @@ namespace LiebTechReact.Controllers
     public class MLNetController : ControllerBase
     {
         private static MLContext _mlContext = null;
-
+        private static string modelSize = "0";
         private static ITransformer _loadedModel;        
         private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineSDCA = null;
         private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineLR = null;
@@ -34,24 +35,45 @@ namespace LiebTechReact.Controllers
         {
             try
             {
-                string projectRootPath = _hostingEnvironment.ContentRootPath;
-
+                string projectRootPath = _hostingEnvironment.ContentRootPath;                
+                // if model is not loaded yet, then 
                 if (_mlContext == null)
                 {
                     _mlContext = new MLContext(seed: 0);
-                           
-                    string _modelPath = projectRootPath + "/Data/SD20_feed_model.zip";                    
-                    using (var stream = new FileStream(_modelPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                        _loadedModel = _mlContext.Model.Load(stream);
-                    _predEngineSDCA = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
 
-                    _modelPath = projectRootPath + "/Data/LR20_feed_model.zip";
-                    using (var stream = new FileStream(_modelPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                        _loadedModel = _mlContext.Model.Load(stream);                    
-                    _predEngineLR = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
+                    // get the models in the data folder
+                    DirectoryInfo di = new DirectoryInfo(projectRootPath + "/Data/");
+
+                    var reg = "model_SD\\d{1,2}.zip";
+                    var files = di.GetFiles("model_SD*.zip").OrderByDescending(z => z.CreationTime).ToList();
+                    foreach (var f in files)
+                    {
+                        if (Regex.Match(f.FullName, reg).Success)
+                        {
+                            using (var stream = new FileStream(f.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                                _loadedModel = _mlContext.Model.Load(stream);
+                            _predEngineSDCA = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
+
+                            modelSize = f.Name.Substring(8, f.Name.IndexOf(".") -8);
+                            break;
+                        }
+                    }
+
+                    reg = "model_LR\\d{1,2}.zip";
+                    files = di.GetFiles("model_LR*.zip").OrderByDescending(z => z.CreationTime).ToList();
+                    foreach (var f in files)
+                    {
+                        if (Regex.Match(f.FullName, reg).Success)
+                        {
+                            using (var stream = new FileStream(f.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                                _loadedModel = _mlContext.Model.Load(stream);
+                            _predEngineLR = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
+                            break;
+                        }
+                    }
                 }
 
-                return Ok(new { loadedOk = true });
+                return Ok(new { loadedOk = true, size = modelSize });
             }
             catch (Exception ex)
             {
