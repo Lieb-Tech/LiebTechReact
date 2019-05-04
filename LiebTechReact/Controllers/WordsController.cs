@@ -48,7 +48,6 @@ namespace LiebTechReact.Controllers
             public int count;
         }
 
-        // Trump'
         [Route("search/{val}")]
         [HttpGet]
         public ActionResult GetSearch(string val)
@@ -56,7 +55,7 @@ namespace LiebTechReact.Controllers
             Stopwatch sw = new Stopwatch();
             sw.Start();
             var qry = Program.cdb.GetDocumentQuery("system",
-                    $"select top 10 value w from c join w in c.words join d in w.data where contains(c.id, 'NER:') and Lower(w.word)= '{val.ToLower()}' ORDER BY c._ts");
+                    $"select top 10 value w from c join w in c.words join d in w.data where contains(c.id, 'NER:') and w.word = '{val}' ORDER BY c._ts DESC ");
             var results = qry.ToList();
 
             var ret = new List<ner>();
@@ -201,7 +200,7 @@ namespace LiebTechReact.Controllers
                                 count = result.data.Count()
                             });
                     }
-                    o.vals = o.vals.Where(z => z.count > int.Parse(opts.minResult ?? "2")).OrderByDescending(z => z.count).ToList();
+                    o.vals = o.vals.Where(z => z.count >= int.Parse(opts.minResult ?? "1")).OrderByDescending(z => z.count).ToList();
                 }
                 ret.Add(o);
             }

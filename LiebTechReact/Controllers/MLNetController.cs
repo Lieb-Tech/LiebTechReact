@@ -1,14 +1,12 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.ML;
+using Microsoft.ML.Data;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.ML;
-using Microsoft.ML.Data;
 
 namespace LiebTechReact.Controllers
 {
@@ -21,6 +19,7 @@ namespace LiebTechReact.Controllers
         private static ITransformer _loadedModel;        
         private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineSDCA = null;
         private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineLR = null;
+        private static PredictionEngine<MLNewsItem, SectionPrediction> _predEngineNC = null;
 
         private readonly IHostingEnvironment _hostingEnvironment;
 
@@ -51,23 +50,37 @@ namespace LiebTechReact.Controllers
                         if (Regex.Match(f.FullName, reg).Success)
                         {
                             using (var stream = new FileStream(f.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                                _loadedModel = _mlContext.Model.Load(stream);
-                            _predEngineSDCA = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
+                                _loadedModel = _mlContext.Model.Load(stream, out var modelInputSchema);
+                                
+                            _predEngineSDCA = _mlContext.Model.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_loadedModel);
 
                             modelSize = f.Name.Substring(8, f.Name.IndexOf(".") -8);
                             break;
                         }
                     }
 
-                    reg = "model_LR\\d{1,2}.zip";
-                    files = di.GetFiles("model_LR*.zip").OrderByDescending(z => z.CreationTime).ToList();
+                    reg = "model_LB\\d{1,2}.zip";
+                    files = di.GetFiles("model_LB*.zip").OrderByDescending(z => z.CreationTime).ToList();
                     foreach (var f in files)
                     {
                         if (Regex.Match(f.FullName, reg).Success)
                         {
                             using (var stream = new FileStream(f.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                                _loadedModel = _mlContext.Model.Load(stream);
-                            _predEngineLR = _loadedModel.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_mlContext);
+                                _loadedModel = _mlContext.Model.Load(stream, out var modelInputSchema);
+                            _predEngineLR = _mlContext.Model.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_loadedModel);
+                            break;
+                        }
+                    }
+
+                    reg = "model_NC\\d{1,2}.zip";
+                    files = di.GetFiles("model_NC*.zip").OrderByDescending(z => z.CreationTime).ToList();
+                    foreach (var f in files)
+                    {
+                        if (Regex.Match(f.FullName, reg).Success)
+                        {
+                            using (var stream = new FileStream(f.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                                _loadedModel = _mlContext.Model.Load(stream, out var modelInputSchema);
+                            _predEngineNC = _mlContext.Model.CreatePredictionEngine<MLNewsItem, SectionPrediction>(_loadedModel);
                             break;
                         }
                     }
@@ -108,6 +121,7 @@ namespace LiebTechReact.Controllers
                 {
                     sdca = _predEngineSDCA.Predict(singleIssue),
                     lr = _predEngineLR.Predict(singleIssue),
+                    nc = _predEngineNC.Predict(singleIssue),
                     newsItem = n
                 });
             }
